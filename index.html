@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Túnel de Vento com Objeto</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    canvas {
+      background-color: white;
+      border: 2px solid black;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="windTunnel" width="800" height="600"></canvas>
+  <script>
+    const canvas = document.getElementById('windTunnel');
+    const ctx = canvas.getContext('2d');
+
+    // Partículas
+    const particles = Array.from({ length: 3000 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      speed: 1 + Math.random() * 1,
+    }));
+
+    // OBEJTO
+    // Obstáculos em movimento
+    const obstacles = [
+      { x: 200, y: 150, radius: 30, dx: 1.2, dy: 3 },
+      /*{ x: 400, y: 250, radius: 50, dx: -1.5, dy: 1 },
+      { x: 300, y: 100, radius: 40, dx: 1.2, dy: -0.8 }*/
+    ];
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Atualiza e desenha os obstáculos
+      ctx.fillStyle = 'red';
+      obstacles.forEach(obstacle => {
+        obstacle.x += obstacle.dx;
+        obstacle.y += obstacle.dy;
+
+        // Verifica colisão com as bordas do canvas
+        if (obstacle.x + obstacle.radius > canvas.width || obstacle.x - obstacle.radius < 0) {
+          obstacle.dx *= -1.6;  // Inverte a direção horizontal
+        }
+        if (obstacle.y + obstacle.radius > canvas.height || obstacle.y - obstacle.radius < 0) {
+          obstacle.dy *= -1;  // Inverte a direção vertical
+        }
+
+        ctx.beginPath();
+        ctx.arc(obstacle.x, obstacle.y, obstacle.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      let dragging = false; // Se um obstáculo está sendo arrastado
+      let currentObstacle = null; // Objeto atualmente selecionado
+
+    // Eventos do mouse
+    canvas.addEventListener('mousedown', (e) => {
+      const mouseX = e.offsetX;
+      const mouseY = e.offsetY;
+
+      // Verifica se o clique está dentro de algum obstáculo
+      obstacles.forEach(obstacle => {
+        const dx = mouseX - obstacle.x;
+        const dy = mouseY - obstacle.y;
+        if (Math.sqrt(dx * dx + dy * dy) < obstacle.radius) {
+          dragging = true;
+          currentObstacle = obstacle;
+        }
+      });
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (dragging && currentObstacle) {
+        currentObstacle.x = e.offsetX;
+        currentObstacle.y = e.offsetY;
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      dragging = false;
+      currentObstacle = null;
+    });
+      // Desenha as partículas
+        ctx.fillStyle = 'blue';
+        particles.forEach(p => {
+        p.x += p.speed;
+        if (p.x > canvas.width) p.x = 0;
+
+        // Verifica colisões com cada obstáculo
+        obstacles.forEach(obstacle => {
+          const dx = p.x - obstacle.x;
+          const dy = p.y - obstacle.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < obstacle.radius) {
+            // Reposiciona a partícula fora do obstáculo
+            p.x = obstacle.x + (obstacle.radius + 5) * (dx / distance);
+            p.y = obstacle.y + (obstacle.radius + 5) * (dy / distance);
+          }
+        });
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  </script>
+</body>
+</html>
